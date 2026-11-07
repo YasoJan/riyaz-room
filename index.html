@@ -1,0 +1,873 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Riyaz Room"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="apple-touch-icon.png"><meta name="theme-color" content="#17141f"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></head><body><title>Riyaz Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Tiro+Devanagari+Hindi&display=swap">
+<style>
+/* Layout: night practice room. Sticky control strip (Sa + tanpura), tabbed rooms; Practice = voice scope beside the exercise stand. */
+:root{
+  --bg:#17141f; --surface:#1f1b2a; --surface-2:#29243a; --line:#3a3350;
+  --fg:#ece6da; --muted:#a59fb6; --brass:#d4a851; --brass-ink:#1b1608;
+  --trace:#8fd3c4; --good:#7fcf8e; --near:#e6c25a; --off:#e9806f; --miss:#6f6884;
+  --f-display:"Tiro Devanagari Hindi","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --f-body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f3f0f7; --surface:#ffffff; --surface-2:#ebe6f2; --line:#d6cfe2;
+  --fg:#221d2e; --muted:#665f78; --brass:#94680e; --brass-ink:#fffaf0;
+  --trace:#1d8573; --good:#2f8f45; --near:#9c7406; --off:#c0453a; --miss:#a7a1b5; color-scheme:light;}}
+:root[data-theme="light"]{
+  --bg:#f3f0f7; --surface:#ffffff; --surface-2:#ebe6f2; --line:#d6cfe2;
+  --fg:#221d2e; --muted:#665f78; --brass:#94680e; --brass-ink:#fffaf0;
+  --trace:#1d8573; --good:#2f8f45; --near:#9c7406; --off:#c0453a; --miss:#a7a1b5; color-scheme:light;}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 var(--f-body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* control strip */
+.strip{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.strip .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:12px}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand h1{font:400 1.6rem/1 var(--f-display);margin:0;letter-spacing:.01em}
+.brand .deva{font-family:var(--f-display);color:var(--brass);font-size:1.15rem}
+.ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+select,input[type=number]{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+input[type=range]{accent-color:var(--brass);width:90px}
+.btn{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:7px 16px;font-weight:600}
+.btn:hover{border-color:var(--brass)}
+.btn.primary{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
+.btn.on{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
+.btn.sm{padding:4px 12px;font-size:.85rem}
+.tan-dot{width:8px;height:8px;border-radius:50%;background:var(--miss);display:inline-block;margin-right:6px;vertical-align:middle}
+.btn.on .tan-dot{background:var(--brass-ink);animation:pulse 1.7s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.btn.on .tan-dot{animation:none}}
+.session-pill{font-family:var(--f-mono);font-size:.8rem;background:var(--surface-2);border:1px solid var(--brass);border-radius:999px;padding:4px 12px;color:var(--brass)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;padding-block:14px 0;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--brass)}
+main.wrap{padding-block:18px 56px}
+h2{font:400 1.45rem/1.2 var(--f-display);margin:0 0 4px;text-wrap:balance}
+h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px;font-weight:700}
+.sub{color:var(--muted);margin:0 0 16px;max-width:65ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+
+/* practice */
+.stage{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.stage{grid-template-columns:minmax(0,1fr)}}
+.scope{position:relative;height:330px;border-radius:10px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.scope canvas{width:100%;height:100%;display:block}
+.scope .tag{position:absolute;right:10px;top:8px;font-size:.72rem;color:var(--muted);font-family:var(--f-mono)}
+@media (max-width:560px){.scope{height:250px}}
+.readout{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 18px;align-items:center;margin-top:14px}
+.swar{font:400 3.4rem/1 var(--f-display);min-width:2.6ch;text-align:center;color:var(--fg)}
+.swar small{display:block;font:600 .7rem/1.2 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.meter{position:relative;height:30px;border-radius:8px;background:var(--surface-2);overflow:hidden}
+.meter .zone{position:absolute;left:40%;width:20%;top:0;bottom:0;background:color-mix(in srgb,var(--good) 22%,transparent)}
+.meter .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--muted)}
+.meter .needle{position:absolute;top:3px;bottom:3px;width:4px;margin-left:-2px;border-radius:2px;background:var(--trace);left:50%;transition:left .08s linear}
+.meter-scale{display:flex;justify-content:space-between;font:400 .7rem var(--f-mono);color:var(--muted);margin-top:3px}
+.nums{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--muted);font-size:.85rem}
+.nums b{color:var(--fg);font-weight:600}
+.microw{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.note-box{margin-top:12px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:.88rem;color:var(--muted)}
+.note-box strong{color:var(--fg)}
+
+.ex-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.cat{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--brass);font-weight:700}
+.notation{display:flex;flex-wrap:wrap;gap:8px 14px;margin:16px 0;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--line);max-height:250px;overflow:auto}
+.grp{display:flex;gap:2px}
+.brk{flex-basis:100%;height:0}
+.nt{position:relative;min-width:1.7em;padding:8px 3px 9px;text-align:center;font:600 1.05rem/1 var(--f-body);border-radius:6px;color:var(--fg);transition:background .1s}
+.nt .k{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
+.nt .tv{position:relative}
+.nt .tv::before{content:"";position:absolute;left:50%;top:-6px;width:2px;height:5px;background:currentColor;margin-left:-1px}
+.nt .dt{position:absolute;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor}
+.nt .dt.up{top:1px}.nt .dt.dn{bottom:1px}
+.nt .ext{color:var(--muted);font-weight:400;letter-spacing:.05em}
+.nt .gl{color:var(--brass);font-weight:400;margin:0 1px}
+.nt .os{color:var(--brass);font-size:.75em}
+.nt.rest{color:var(--miss)}
+.nt.on{background:var(--brass);color:var(--brass-ink)}
+.nt.on .ext,.nt.on .gl,.nt.on .os{color:var(--brass-ink)}
+.nt.good{box-shadow:inset 0 -3px 0 var(--good)}
+.nt.near{box-shadow:inset 0 -3px 0 var(--near)}
+.nt.off{box-shadow:inset 0 -3px 0 var(--off)}
+.nt.miss{box-shadow:inset 0 -3px 0 var(--miss)}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:none;padding:5px 12px;font-size:.85rem;color:var(--muted);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--fg)}
+.score{margin-top:12px;font-size:.9rem;color:var(--muted);min-height:1.5em}
+.score b{color:var(--fg)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.75rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.teach{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.teach dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:0}
+.teach dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:var(--brass);font-weight:700;padding-top:3px}
+.teach dd{margin:0;max-width:62ch}
+
+/* library */
+.lib-top{display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:space-between;margin-bottom:18px}
+.lib-sec{margin-bottom:28px}
+.lib-sec>h3{border-bottom:1px solid var(--line);padding-bottom:8px}
+.lib-sec .sec-note{color:var(--muted);font-size:.9rem;margin:-2px 0 12px;max-width:70ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;text-align:left}
+.card:hover{border-color:var(--brass)}
+.card .nm{font-weight:700}
+.card .pv{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .ds{font-size:.85rem;color:var(--muted);flex:1}
+.card .go{align-self:flex-start}
+
+/* routine */
+.rt-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.rt-grid{grid-template-columns:minmax(0,1fr)}}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.step{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid transparent}
+.step.cur{border-color:var(--brass);background:var(--surface-2)}
+.step.done{opacity:.55}
+.step .n{font-family:var(--f-mono);color:var(--muted);font-size:.85rem}
+.step .t{min-width:0}
+.step .t b{display:block}
+.step .t span{font-size:.82rem;color:var(--muted)}
+.step .m{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.85rem;color:var(--muted)}
+.clock{font:600 2.6rem/1 var(--f-mono);font-variant-numeric:tabular-nums;margin:6px 0 4px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat .v{font:600 1.35rem/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.stat .k{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.bar10k{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden;margin:6px 0}
+.bar10k div{height:100%;background:var(--brass);width:0}
+.days{display:flex;align-items:flex-end;gap:4px;height:90px;margin-top:10px}
+.days .d{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;min-width:0}
+.days .d i{display:block;width:100%;max-width:22px;border-radius:4px 4px 0 0;background:var(--brass);min-height:2px}
+.days .d i.zero{background:var(--line)}
+.days .d span{font:400 .62rem var(--f-mono);color:var(--muted)}
+.addlog{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.addlog input{width:90px}
+
+/* check */
+.drop{border:2px dashed var(--line);border-radius:14px;padding:26px;text-align:center;color:var(--muted)}
+.drop.hover{border-color:var(--brass)}
+.drop input{display:none}
+.res-scope{height:300px;margin-top:16px}
+.tbl-wrap{overflow-x:auto;margin-top:14px}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.foot{color:var(--muted);font-size:.82rem;margin-top:30px;max-width:75ch}
+</style>
+
+<header class="strip">
+  <div class="wrap">
+    <div class="brand"><h1>Riyaz Room</h1><span class="deva">रियाज़</span></div>
+    <div class="ctl">
+      <label class="lbl" for="saSel">Sa</label>
+      <select id="saSel" aria-label="Choose your Sa"></select>
+      <label class="lbl" for="fine">Fine</label>
+      <input id="fine" type="number" min="-50" max="50" step="1" value="0" style="width:64px" aria-label="Fine tune Sa in cents">
+    </div>
+    <div class="ctl">
+      <button class="btn" id="tanBtn"><span class="tan-dot"></span>Tanpura</button>
+      <label class="lbl" for="first">1st string</label>
+      <select id="first"><option value="P">Pa</option><option value="m">Ma</option><option value="N">Ni</option></select>
+      <input id="tanVol" type="range" min="0" max="1" step="0.01" aria-label="Tanpura volume">
+    </div>
+    <div class="ctl">
+      <label class="lbl" for="tanSrc">Sound</label>
+      <select id="tanSrc"><option value="synth">Built-in tanpura</option><option value="rec">My tanpura recording</option></select>
+      <select id="recKey" aria-label="Key the recording is tuned to"></select>
+      <label class="btn sm" for="tanFile" id="tanFileLbl">Load recording</label>
+      <input type="file" id="tanFile" accept="audio/*" hidden>
+      <span class="nums" id="recName"></span>
+    </div>
+    <span class="session-pill" id="sessPill" hidden></span>
+  </div>
+  <div class="wrap"><nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="practice" id="t-practice">Practice</button>
+    <button class="tab" role="tab" data-tab="library" id="t-library">Lessons</button>
+    <button class="tab" role="tab" data-tab="routine" id="t-routine">Daily riyaz</button>
+    <button class="tab" role="tab" data-tab="check" id="t-check">Recording check</button>
+  </nav></div>
+</header>
+
+<main class="wrap">
+  <!-- PRACTICE -->
+  <section id="practice" class="view">
+    <div class="stage">
+      <div class="panel">
+        <h3>Your voice against Sa</h3>
+        <div class="scope" id="scopeBox"><canvas id="trace"></canvas><span class="tag" id="scopeTag">Sample trace</span></div>
+        <div class="readout">
+          <div class="swar" id="swarBig">सा<small id="swarName">Sa · madhya</small></div>
+          <div>
+            <div class="meter" aria-hidden="true"><div class="zone"></div><div class="mid"></div><div class="needle" id="needle"></div></div>
+            <div class="meter-scale"><span>−50 flat</span><span>±10</span><span>sharp +50</span></div>
+            <div class="nums" style="margin-top:8px"><b id="centsOut">0</b> cents · <b id="hzOut">—</b> Hz · Sa <b id="saHz">—</b> Hz</div>
+          </div>
+        </div>
+        <div class="microw">
+          <button class="btn primary" id="micBtn">Start mic</button>
+          <span class="nums" id="micStatus">Wear headphones so the mic only hears your voice.</span>
+        </div>
+        <div class="note-box" id="micHelp" hidden></div>
+      </div>
+
+      <div class="panel" id="exPanel">
+        <div class="ex-head">
+          <div><div class="cat" id="exCat"></div><h2 id="exName"></h2></div>
+          <div class="ctl" id="thaatWrap"><label class="lbl" for="thaatSel">Thaat</label><select id="thaatSel"></select></div>
+        </div>
+        <div class="notation" id="notation" aria-live="off"></div>
+        <div class="controls">
+          <button class="btn primary" id="playBtn">Play</button>
+          <div class="ctl"><label class="lbl" for="tempo">Tempo</label><input id="tempo" type="range" min="30" max="160" step="1"><span class="nums" id="tempoOut"></span></div>
+          <div class="seg" role="group" aria-label="Guide">
+            <button data-guide="tone" id="g-tone">Harmonium guide</button>
+            <button data-guide="silent" id="g-silent">Silent</button>
+          </div>
+          <label class="ctl nums"><input type="checkbox" id="loopChk"> Loop</label>
+          <div class="ctl"><label class="lbl" for="guideVol">Guide vol</label><input id="guideVol" type="range" min="0" max="1" step="0.01"></div>
+        </div>
+        <div class="score" id="scoreOut">Press Play. The highlighted swar is the one to sing.</div>
+        <div class="legend"><span><i style="background:var(--good)"></i>within 15 cents</span><span><i style="background:var(--near)"></i>within 35</span><span><i style="background:var(--off)"></i>further off</span><span><i style="background:var(--miss)"></i>not heard</span></div>
+        <div class="teach"><dl id="teach"></dl></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIBRARY -->
+  <section id="library" class="view" hidden>
+    <div class="lib-top">
+      <div><h2>Lessons</h2><p class="sub" style="margin:0">Everything here plays over the tanpura in your Sa. Alankars, paltas and taan drills follow the thaat you pick.</p></div>
+      <div class="ctl"><label class="lbl" for="thaatSel2">Thaat</label><select id="thaatSel2"></select></div>
+    </div>
+    <div id="libBody"></div>
+  </section>
+
+  <!-- ROUTINE -->
+  <section id="routine" class="view" hidden>
+    <h2>Daily riyaz</h2>
+    <p class="sub">A guided session from warm-up to song. Start with the 45-minute plan and move to 90 once it feels automatic. Time logs itself while a session runs.</p>
+    <div class="rt-grid">
+      <div class="panel">
+        <div class="ex-head" style="margin-bottom:12px">
+          <div class="seg" role="group" aria-label="Plan">
+            <button data-plan="starter" id="p-starter">Starter · 45 min</button>
+            <button data-plan="full" id="p-full">Full · 90 min</button>
+          </div>
+          <div class="ctl"><button class="btn primary" id="sessBtn">Start session</button><button class="btn" id="skipBtn">Next step</button></div>
+        </div>
+        <ol class="steps" id="steps"></ol>
+      </div>
+      <div class="panel">
+        <h3>Current step</h3>
+        <div class="clock" id="clock">00:00</div>
+        <div class="nums" id="clockStep">Not running</div>
+        <h3 style="margin-top:22px">Toward 10,000 hours</h3>
+        <div class="bar10k"><div id="bar10k"></div></div>
+        <div class="nums" id="pace"></div>
+        <div class="stats">
+          <div class="stat"><div class="v" id="stToday">0</div><div class="k">min today</div></div>
+          <div class="stat"><div class="v" id="stStreak">0</div><div class="k">day streak</div></div>
+          <div class="stat"><div class="v" id="stTotal">0.0</div><div class="k">total hours</div></div>
+        </div>
+        <h3>Last 14 days</h3>
+        <div class="days" id="days"></div>
+        <div class="addlog">
+          <label class="lbl" for="addMin">Add practice done elsewhere</label>
+          <input id="addMin" type="number" min="1" max="600" placeholder="min">
+          <button class="btn sm" id="addBtn">Add to today</button>
+        </div>
+        <p class="nums" style="margin-top:10px">Your log is saved in this browser only.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECK -->
+  <section id="check" class="view" hidden>
+    <h2>Recording check</h2>
+    <p class="sub">Record your riyaz on your phone, then drop the file here. You get your pitch line against the swar lanes for your Sa, and how far each swar drifted on average.</p>
+    <label class="drop" id="drop" for="fileIn">
+      <input type="file" id="fileIn" accept="audio/*,video/*">
+      <div><strong>Choose a recording</strong> or drop it here</div>
+      <div class="nums" style="margin-top:6px">m4a, mp3, wav · first 8 minutes are analyzed · Sa is set from the top bar</div>
+    </label>
+    <div id="checkOut" hidden>
+      <div class="scope res-scope"><canvas id="resCanvas"></canvas><span class="tag" id="resTag"></span></div>
+      <div class="stats" id="resStats"></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Swar</th><th>Share of time</th><th>Avg. distance</th><th>Tends to be</th></tr></thead><tbody id="resRows"></tbody></table></div>
+    </div>
+    <p class="nums" id="checkStatus" style="margin-top:12px"></p>
+  </section>
+
+  <p class="foot">Swar targets use the natural intervals a tanpura rings with, not piano tuning: Re 204, Ga 386, Ma 498, Pa 702, Dha 884, Ni 1088 cents above Sa. Komal swars are underlined, tivra Ma has a mark above, a dot below means mandra and a dot above means taar.</p>
+</main>
+
+<script>
+(()=>{
+"use strict";
+/* ---------- music data ---------- */
+const JI=[0,112,204,316,386,498,590,702,814,884,996,1088];
+const SW=[
+ {l:'S',d:'सा',n:'Sa'},{l:'R',d:'रे',n:'komal Re',k:1},{l:'R',d:'रे',n:'Re'},{l:'G',d:'ग',n:'komal Ga',k:1},
+ {l:'G',d:'ग',n:'Ga'},{l:'M',d:'म',n:'Ma'},{l:'M',d:'म॑',n:'tivra Ma',t:1},{l:'P',d:'प',n:'Pa'},
+ {l:'D',d:'ध',n:'komal Dha',k:1},{l:'D',d:'ध',n:'Dha'},{l:'N',d:'नि',n:'komal Ni',k:1},{l:'N',d:'नि',n:'Ni'}];
+const OCT={'-2':'ati-mandra','-1':'mandra','0':'madhya','1':'taar','2':'ati-taar'};
+const THAATS={Bilawal:[0,2,4,5,7,9,11],Kalyan:[0,2,4,6,7,9,11],Khamaj:[0,2,4,5,7,9,10],Kafi:[0,2,3,5,7,9,10],
+ Asavari:[0,2,3,5,7,8,10],Bhairavi:[0,1,3,5,7,8,10],Bhairav:[0,1,4,5,7,8,11],Purvi:[0,1,4,6,7,8,11],Marwa:[0,1,4,6,7,9,11],Todi:[0,1,3,6,7,8,11]};
+const NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const HARM=['Safed 1','Kali 1','Safed 2','Kali 2','Safed 3','Safed 4','Kali 3','Safed 5','Kali 4','Safed 6','Kali 5','Safed 7'];
+const LET={S:0,r:1,R:2,g:3,G:4,m:5,M:6,P:7,d:8,D:9,n:10,N:11};
+
+const ALANKAR_TEACH={
+ how:"Sing each group in 'aa', one breath per line. Keep every swar the same loudness and tone, and land in the centre of each lane.",
+ watch:"Rushing the top of the line, going sharp on Ga and Ni, and letting taar Sa get pinched. Slow the tempo until every chip turns green."};
+const EX=[
+ {id:'floor',cat:'Foundations',name:'Floor breath and hum',fixed:"S---- _--- S---- _--- S---- _--- S----",tempo:50,
+  teach:{aim:"Feel low, easy breathing and a tension-free tone before you sit up.",how:"Lie on your back, knees bent, a book under your head. Breathe into your belly and sides for a slow count of four. On each exhale, hum Sa softly with lips closed and feel the buzz in your lips and face.",watch:"Any tightening in the neck or jaw means you are pushing. Get quieter. Don't do this right after eating.",then:"Sit up and keep that same ease for the rest of the session."}},
+ {id:'sa',cat:'Foundations',name:'Sa sadhana',fixed:"S------- _--- S------- _--- S------- _--- S-------",tempo:60,
+  teach:{aim:"A Sa that sits perfectly still on the tanpura. Everything else is built on this.",how:"Sing 'aa' on madhya Sa for the full eight beats. Start soft and let the volume grow while the pitch line stays flat on the Sa lane.",watch:"Going sharp as you get louder, and a wobble at the end of the breath. Stop the note before your air runs out."}},
+ {id:'kharaj',cat:'Foundations',name:'Kharaj',fixed:"S------- P,------- S,------- P,------- S-------",tempo:60,
+  teach:{aim:"Depth, weight and a relaxed low register.",how:"Glide down to mandra Pa and mandra Sa gently, on 'aa' or a hum. Let the sound be warm and unforced. Early morning is the traditional time.",watch:"Pressing the throat down to reach the low notes. If mandra Sa won't speak yet, stay on mandra Pa for now."}},
+ {id:'aakar',cat:'Foundations',name:"Aakar across the octave",fixed:"S---- P---- S'---- P---- S----",tempo:60,
+  teach:{aim:"One open 'aa' vowel with the same tone colour from Sa to taar Sa.",how:"Keep the jaw loose and the mouth open the same amount as you rise. Taar Sa should feel like Sa again, an octave up, not a stretch.",watch:"The vowel closing toward 'uh' or spreading to 'ae' on the way up."}},
+
+ {id:'sapaat',cat:'Alankars',name:'Sapaat',pat:[0],desc:"The plain scale, up and down.",teach:{aim:"Clean, even steps through the thaat.",...ALANKAR_TEACH}},
+ {id:'doubles',cat:'Alankars',name:'Doubled swars',pat:[0,0],desc:"Each swar twice: SS RR GG.",teach:{aim:"Re-attacking a swar without the pitch sliding.",...ALANKAR_TEACH}},
+ {id:'pairs',cat:'Alankars',name:'Pairs',pat:[0,1],desc:"SR RG GM, then back down.",teach:{aim:"Smooth connection between neighbouring swars.",...ALANKAR_TEACH}},
+ {id:'triplets',cat:'Alankars',name:'Threes',pat:[0,1,2],desc:"SRG RGM GMP.",teach:{aim:"Phrasing in groups of three without rushing.",...ALANKAR_TEACH}},
+ {id:'fours',cat:'Alankars',name:'Fours',pat:[0,1,2,3],desc:"SRGM RGMP.",teach:{aim:"Breath control over longer groups.",...ALANKAR_TEACH}},
+ {id:'skips',cat:'Alankars',name:'Skips',pat:[0,2],desc:"SG RM GP: leaping a swar.",teach:{aim:"Landing a leap accurately with no scoop.",...ALANKAR_TEACH}},
+ {id:'zigzag',cat:'Alankars',name:'Zig-zag',pat:[0,2,1,3],desc:"SGRM RMGP.",teach:{aim:"Pitch memory: you must hear each swar before you sing it.",...ALANKAR_TEACH}},
+ {id:'turn',cat:'Alankars',name:'Turnaround',pat:[0,1,2,1,0],desc:"SRGRS RGMGR.",teach:{aim:"Turning direction cleanly at the top of a phrase.",...ALANKAR_TEACH}},
+
+ {id:'run5',cat:'Paltas',name:'Five-note run',pat:[0,1,2,3,4],desc:"SRGMP RGMPD.",teach:{aim:"Longer runs with steady tone.",...ALANKAR_TEACH}},
+ {id:'ret',cat:'Paltas',name:'Return',pat:[0,1,2,1],desc:"SRGR RGMG.",teach:{aim:"A small turn inside each group.",...ALANKAR_TEACH}},
+ {id:'leap',cat:'Paltas',name:'Leap and back',pat:[0,2,1],desc:"SGR RMG.",teach:{aim:"Leaping up and stepping back without losing the centre of the swar.",...ALANKAR_TEACH}},
+ {id:'wide',cat:'Paltas',name:'Wide skip',pat:[0,3],desc:"SM RP GD: fourths.",teach:{aim:"Big intervals sung cleanly, like the leaps in real songs.",...ALANKAR_TEACH}},
+ {id:'longret',cat:'Paltas',name:'Long return',pat:[0,1,2,3,2,1],desc:"SRGMGR.",teach:{aim:"Stamina and evenness across a six-swar group.",...ALANKAR_TEACH}},
+
+ {id:'meend',cat:'Meend and ornaments',name:'Meend up and down',fixed:"S~R--- R~S--- S~G--- G~S--- S~P--- P~S---",tempo:60,
+  teach:{aim:"A continuous glide between swars, the heart of expressive singing.",how:"Slide slowly and evenly the whole way, voice never breaking, and arrive exactly on the target lane. The line on the scope should be one smooth curve.",watch:"Holding the first swar and jumping at the end instead of gliding, or overshooting the target."}},
+ {id:'meendtop',cat:'Meend and ornaments',name:'Meend from taar Sa',fixed:"S'~N--- N~D--- D~P--- P~S---",tempo:60,
+  teach:{aim:"Controlled descending glides, the way ghazal lines often fall.",how:"Start taar Sa softly, glide down with even speed, and keep the tone round as you descend.",watch:"Losing volume and support on the way down."}},
+ {id:'andolan',cat:'Meend and ornaments',name:'Andolan',fixed:"S--- r*------ S--- P--- d*------ P--- S'---",tempo:60,
+  teach:{aim:"The slow, gentle swing on komal Re and komal Dha that gives Bhairav its colour.",how:"Sustain the swar and let it sway slowly just below and back to the swar. The swing comes from the breath, not the jaw.",watch:"Making it too wide or too fast. This is not vibrato."}},
+ {id:'gamak',cat:'Meend and ornaments',name:'Gamak prep',fixed:"GmGmG--- mPmPm--- PDPDP--- DNDND---",tempo:60,speed:2,
+  teach:{aim:"A quick, even shake between neighbouring swars.",how:"Keep the jaw still and let the movement come from the breath. Start slow and only speed up when each swar is clear.",watch:"Throat tension and uneven rhythm."}},
+
+ {id:'taan2',cat:'Taan prep',name:'Pairs at double speed',pat:[0,1],speed:2,desc:"Clarity at speed.",teach:{aim:"Clear, separate swars at speed.",how:"Sing in 'aa' with a light voice. Every swar must be distinct, not smeared.",watch:"Speed before clarity. Only raise the tempo when the whole line scores green."}},
+ {id:'taan4',cat:'Taan prep',name:'Fours at double speed',pat:[0,1,2,3],speed:2,desc:"Longer taan groups.",teach:{aim:"Taan stamina in groups of four.",how:"Take one breath per line. Accent the first swar of each group slightly to keep your place.",watch:"Going flat as breath runs low."}},
+ {id:'taanS',cat:'Taan prep',name:'Sapaat taan',pat:[0],speed:4,desc:"The whole scale in one sweep.",teach:{aim:"A fast, even run through the octave.",how:"Light voice, one breath up and down, eyes on the highlighted swar.",watch:"Skipping swars at the top. Lower the tempo if any chip shows grey."}},
+
+ {id:'yaman',cat:'Raag scales',name:'Yaman',raag:true,fixed:"N, R G M D N S' / S' N D P M G R S",desc:"Evening. Tivra Ma; the aroh often starts from mandra Ni.",tempo:60,
+  teach:{aim:"Aroh and avroh of Yaman.",how:"Sing slowly with the tanpura. Notice how tivra Ma pulls toward Pa.",watch:"Tivra Ma sliding flat toward shuddha Ma."}},
+ {id:'bhupali',cat:'Raag scales',name:'Bhupali',raag:true,fixed:"S R G P D S' / S' D P G R S",desc:"Evening. Five swars, no Ma or Ni.",tempo:60,
+  teach:{aim:"Aroh and avroh of Bhupali.",how:"Let Ga and Dha ring; they are the bright centres of this raag.",watch:"Ga creeping sharp."}},
+ {id:'bhairav',cat:'Raag scales',name:'Bhairav',raag:true,fixed:"S r G m P d N S' / S' N d P m G r S",desc:"Dawn. Komal Re and komal Dha, often with andolan.",tempo:60,
+  teach:{aim:"Aroh and avroh of Bhairav.",how:"Keep komal Re and komal Dha low and heavy. Try the andolan lesson on them.",watch:"Komal Re drifting up toward shuddha Re."}},
+ {id:'bhairavi',cat:'Raag scales',name:'Bhairavi',raag:true,fixed:"S r g m P d n S' / S' n d P m g r S",desc:"Komal Re, Ga, Dha and Ni. Traditionally sung to close a gathering.",tempo:60,
+  teach:{aim:"Aroh and avroh of Bhairavi.",how:"Four komal swars: sing each with care and feeling.",watch:"Komal Ga and komal Ni going sharp."}},
+ {id:'kafi',cat:'Raag scales',name:'Kafi',raag:true,fixed:"S R g m P D n S' / S' n D P m g R S",desc:"Komal Ga and Ni. Close to folk and light classical.",tempo:60,
+  teach:{aim:"Aroh and avroh of Kafi.",how:"Relaxed and lyrical. Let komal Ga sit warm.",watch:"Mixing in shuddha Ga."}},
+ {id:'khamaj',cat:'Raag scales',name:'Khamaj',raag:true,fixed:"S G m P D N S' / S' n D P m G R S",desc:"Shuddha Ni rising, komal Ni falling. Common in ghazal and thumri.",tempo:60,
+  teach:{aim:"Aroh and avroh of Khamaj.",how:"Notice the aroh skips Re and the avroh uses komal Ni.",watch:"Using shuddha Ni on the way down."}},
+ {id:'malkauns',cat:'Raag scales',name:'Malkauns',raag:true,fixed:"S g m d n S' / S' n d m g S",desc:"Late night. Five swars, no Re or Pa.",tempo:55,
+  teach:{aim:"Aroh and avroh of Malkauns.",how:"Deep and slow. Without Pa, Ma becomes the anchor.",watch:"Komal Dha drifting up."}}
+];
+const EXMAP=Object.fromEntries(EX.map(e=>[e.id,e]));
+const CAT_NOTES={
+ 'Foundations':"Start every session here. These build the steady tone and breath everything else stands on.",
+ 'Alankars':"Classic pattern exercises through the chosen thaat, ascending then descending.",
+ 'Paltas':"Longer and trickier patterns once the alankars feel easy.",
+ 'Meend and ornaments':"Glides and movements. This is where feeling lives in the voice.",
+ 'Taan prep':"Speed drills. Raise the tempo only after the line scores green at the current one.",
+ 'Raag scales':"Aroh and avroh of raags close to ghazal and Afghan music."};
+
+/* ---------- state ---------- */
+const DEF={saMidi:49,fine:0,first:'P',tanVol:0.65,guideVol:0.55,thaat:'Bilawal',tempo:60,guide:'tone',loop:false,exId:'sa',plan:'starter',tanSrc:'synth',recKey:0};
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const S=Object.assign({},DEF,store.get('riyaz.settings',{}));
+if(!S.v2){S.saMidi=48;S.v2=1;}
+const save=()=>store.set('riyaz.settings',S);
+const saHz=()=>440*Math.pow(2,(S.saMidi-69)/12)*Math.pow(2,S.fine/1200);
+const $=id=>document.getElementById(id);
+
+/* ---------- notation ---------- */
+function parse(str){
+  return str.trim().split(/\s+/).map(w=>{
+    if(w==='/') return 'br';
+    const notes=[];let i=0,glide=false;
+    while(i<w.length){const c=w[i];
+      if(c==='_'){notes.push({rest:true,b:1});i++;continue;}
+      if(c in LET){const nt={s:LET[c],o:0,b:1};i++;
+        while(i<w.length&&",'*".includes(w[i])){if(w[i]===',')nt.o--;else if(w[i]==="'")nt.o++;else nt.osc=1;i++;}
+        if(glide&&notes.length){notes[notes.length-1].to={s:nt.s,o:nt.o};glide=false;}else notes.push(nt);
+        continue;}
+      if(c==='-'&&notes.length){notes[notes.length-1].b++;i++;continue;}
+      if(c==='~'){glide=true;i++;continue;}
+      i++;}
+    return notes;});
+}
+function genPattern(scale,p){
+  const L=scale.length,mx=Math.max(...p),g=[];
+  const at=i=>({s:scale[((i%L)+L)%L],o:Math.floor(i/L),b:1});
+  for(let s=0;s+mx<=L;s++)g.push(p.map(o=>at(s+o)));
+  g.push('br');
+  for(let s=L;s-mx>=0;s--)g.push(p.map(o=>at(s-o)));
+  return g;
+}
+function buildGroups(ex){return ex.pat?genPattern(THAATS[S.thaat],ex.pat):parse(ex.fixed);}
+function noteHTML(n){
+  if(n.rest) return '·'+'<span class="ext">'+' –'.repeat(Math.max(0,n.b-1))+'</span>';
+  const one=(s,o)=>{const w=SW[s];let h=`<span class="${w.k?'k':''}${w.t?' tv':''}">${w.l}</span>`;
+    if(o>0)h+='<span class="dt up"></span>'.repeat(1);if(o<0)h+='<span class="dt dn"></span>';return `<span style="position:relative;display:inline-block;padding:0 1px">${h}</span>`;};
+  let h=one(n.s,n.o);
+  if(n.to)h+='<span class="gl">⌒</span>'+one(n.to.s,n.to.o);
+  if(n.osc)h+='<span class="os">∿</span>';
+  if(n.b>1)h+='<span class="ext">'+' –'.repeat(n.b-1)+'</span>';
+  return h;
+}
+function plainNote(n){if(n.rest)return '_';const t=(s,o)=>SW[s].l+(o>0?"'":o<0?",":"");return t(n.s,n.o)+(n.to?'~'+t(n.to.s,n.to.o):'');}
+function centsOf(n){return JI[n.s]+1200*n.o;}
+
+/* ---------- audio ---------- */
+let ctx=null,master,revIn,tanBus,guideBus,jWave;
+function getCtx(){
+  if(ctx)return ctx;
+  ctx=new(window.AudioContext||window.webkitAudioContext)();
+  master=ctx.createGain();master.gain.value=0.9;master.connect(ctx.destination);
+  const conv=ctx.createConvolver();const len=Math.floor(ctx.sampleRate*2.6);const ib=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(let ch=0;ch<2;ch++){const d=ib.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);}
+  conv.buffer=ib;const wet=ctx.createGain();wet.gain.value=0.3;conv.connect(wet);wet.connect(master);revIn=conv;
+  tanBus=ctx.createGain();tanBus.gain.value=S.tanVol;tanBus.connect(master);tanBus.connect(revIn);
+  guideBus=ctx.createGain();guideBus.gain.value=S.guideVol;guideBus.connect(master);
+  const gs=ctx.createGain();gs.gain.value=0.35;guideBus.connect(gs);gs.connect(revIn);
+  const re=new Float32Array(33),im=new Float32Array(33);
+  for(let n=1;n<33;n++){let a=1/Math.pow(n,0.85);if(n>=6&&n<=18)a*=1.9;im[n]=a;}
+  jWave=ctx.createPeriodicWave(re,im);
+  return ctx;
+}
+function pluck(f,t){
+  const f1=ctx.createOscillator(),f2=ctx.createOscillator();
+  f1.setPeriodicWave(jWave);f2.setPeriodicWave(jWave);f1.frequency.value=f;f2.frequency.value=f;f2.detune.value=3.5;
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.Q.value=2.2;
+  lp.frequency.setValueAtTime(800,t);lp.frequency.linearRampToValueAtTime(3600,t+1.1);lp.frequency.exponentialRampToValueAtTime(1100,t+4.2);
+  const g=ctx.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.2,t+0.008);
+  g.gain.exponentialRampToValueAtTime(0.055,t+1.6);g.gain.exponentialRampToValueAtTime(0.0001,t+4.9);
+  f1.connect(lp);f2.connect(lp);lp.connect(g);g.connect(tanBus);
+  f1.start(t);f2.start(t);f1.stop(t+5);f2.stop(t+5);
+}
+const tan={on:false,next:0,step:0,timer:null};
+const OFFS=[0,1.0,1.45,1.9],CYC=3.4;
+function tanFreq(i){const sa=saHz();if(i===0)return S.first==='P'?sa*0.75:S.first==='m'?sa*2/3:sa*15/16;return i===3?sa/2:sa;}
+function tanTick(){
+  while(tan.next<ctx.currentTime+0.25){const i=tan.step%4;pluck(tanFreq(i),tan.next);
+    const ni=(i+1)%4;tan.next+=ni===0?CYC-OFFS[3]:OFFS[ni]-OFFS[i];tan.step++;}
+}
+/* recorded tanpura: streamed from an audio element, pitch-shifted by playback rate */
+const rec={el:null,node:null,url:null,name:''};
+function recEnsure(){getCtx();if(!rec.el){rec.el=new Audio();rec.el.loop=true;rec.el.preload='auto';
+  rec.el.preservesPitch=false;rec.el.mozPreservesPitch=false;rec.el.webkitPreservesPitch=false;
+  try{rec.node=ctx.createMediaElementSource(rec.el);rec.node.connect(tanBus);}catch(e){}}
+  if(rec.url&&rec.el.src!==rec.url)rec.el.src=rec.url;}
+function recRate(){const keyHz=440*Math.pow(2,(48+S.recKey-69)/12);let r=saHz()/keyHz;while(r>1.415)r/=2;while(r<0.707)r*=2;return r;}
+function useRec(){return S.tanSrc==='rec'&&!!rec.url;}
+function tanSet(on){
+  if(on===tan.on)return;getCtx();ctx.resume();tan.on=on;$('tanBtn').classList.toggle('on',on);
+  if(on){
+    if(useRec()){recEnsure();rec.el.playbackRate=recRate();const pr=rec.el.play();if(pr&&pr.catch)pr.catch(()=>{});}
+    else{tan.step=0;tan.next=ctx.currentTime+0.08;tanTick();tan.timer=setInterval(tanTick,50);}
+  }else{clearInterval(tan.timer);if(rec.el)rec.el.pause();}
+}
+function tanRestart(){if(tan.on){tanSet(false);tanSet(true);}}
+function recUI(){
+  const r=S.tanSrc==='rec';$('recKey').hidden=!r;$('tanFileLbl').hidden=!r;$('recName').hidden=!r;
+  $('first').hidden=r;$('first').previousElementSibling.hidden=r;
+  $('recName').textContent=rec.url?rec.name:'No recording loaded yet';
+}
+const idb={open(){return new Promise((res,rej)=>{const q=indexedDB.open('riyaz',1);q.onupgradeneeded=()=>q.result.createObjectStore('f');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});},
+  async put(k,v){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('f','readwrite');tx.objectStore('f').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});},
+  async get(k){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction('f').objectStore('f').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}};
+function setRecFile(blob,name){if(rec.url)URL.revokeObjectURL(rec.url);rec.url=URL.createObjectURL(blob);rec.name=name.length>28?name.slice(0,25)+'…':name;
+  if(rec.el)rec.el.src=rec.url;else{rec.pending=true;}recUI();}
+function noteFreq(n){return saHz()*Math.pow(2,centsOf(n)/1200);}
+
+/* ---------- pitch detection (YIN) ---------- */
+let _d=null;
+function yin(buf,sr,minF,maxF){
+  const N=buf.length,W=N>>1;let rms=0;for(let i=0;i<N;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/N);
+  if(rms<0.008)return null;
+  const maxT=Math.min(W-1,Math.floor(sr/minF)),minT=Math.max(2,Math.floor(sr/maxF));
+  if(!_d||_d.length<maxT+2)_d=new Float32Array(maxT+2);const d=_d;d[0]=1;let sum=0;
+  for(let t=1;t<=maxT;t++){let s=0;for(let j=0;j<W;j++){const x=buf[j]-buf[j+t];s+=x*x;}sum+=s;d[t]=sum?s*t/sum:1;}
+  let tau=-1;for(let t=minT;t<=maxT;t++){if(d[t]<0.15){while(t+1<=maxT&&d[t+1]<d[t])t++;tau=t;break;}}
+  if(tau<0)return null;let bt=tau;
+  if(tau>1&&tau<maxT){const a=d[tau-1],b=d[tau],c=d[tau+1],den=a+c-2*b;if(den)bt=tau+(a-c)/(2*den);}
+  return{f:sr/bt,clar:1-d[tau],rms};
+}
+function nearest(c){
+  let best=null;for(let k=-2;k<=2;k++)for(let s=0;s<12;s++){const t=JI[s]+1200*k,dv=c-t;if(!best||Math.abs(dv)<Math.abs(best.dev))best={s,k,dev:dv,t};}
+  return best;
+}
+
+/* ---------- mic ---------- */
+const mic={on:false,an:null,buf:null,stream:null,hist:[],med:[],frame:0};
+async function micStart(){
+  getCtx();await ctx.resume();
+  const help=$('micHelp');
+  try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('none');
+    mic.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  }catch(e){
+    help.hidden=false;
+    help.innerHTML=window.self!==window.top?"<strong>The mic isn't available in this window.</strong> Inside Claude, pages can't open the microphone. Open the downloaded <strong>riyaz-room.html</strong> file in Chrome, or the web version on your phone, for live pitch tracking. Tanpura, guides and the recording check all work here.":"<strong>The mic was blocked.</strong> Allow microphone access for this site in your browser settings, then reload. On iPhone: Settings → Safari → Microphone, or tap <strong>aA</strong> in the address bar → Website Settings.";
+    $('micStatus').textContent='Mic unavailable here';return;
+  }
+  help.hidden=true;
+  const src=ctx.createMediaStreamSource(mic.stream);mic.an=ctx.createAnalyser();mic.an.fftSize=4096;src.connect(mic.an);
+  mic.buf=new Float32Array(mic.an.fftSize);mic.on=true;$('micBtn').textContent='Stop mic';$('micBtn').classList.remove('primary');
+  $('micStatus').textContent='Listening';$('scopeTag').textContent='Live';
+}
+function micStop(){if(mic.stream)mic.stream.getTracks().forEach(t=>t.stop());mic.on=false;$('micBtn').textContent='Start mic';$('micBtn').classList.add('primary');$('micStatus').textContent='Mic off';}
+function micFrame(){
+  if(!mic.on)return;mic.frame++;if(mic.frame%2)return;
+  mic.an.getFloatTimeDomainData(mic.buf);const r=yin(mic.buf,ctx.sampleRate,60,1100);const now=ctx.currentTime;
+  if(r&&r.clar>0.82){
+    let c=1200*Math.log2(r.f/saHz());mic.med.push(c);if(mic.med.length>5)mic.med.shift();
+    const sorted=mic.med.slice().sort((a,b)=>a-b);c=sorted[sorted.length>>1];
+    mic.hist.push({t:now,c});showReadout(c,r.f);scoreFrame(now,c);
+  }else{mic.med.length=0;mic.hist.push({t:now,c:null});}
+  while(mic.hist.length&&mic.hist[0].t<now-10)mic.hist.shift();
+}
+function showReadout(c,f){
+  const nb=nearest(c),w=SW[nb.s];
+  $('swarBig').firstChild.nodeValue=w.d;$('swarName').textContent=w.n+' · '+OCT[nb.k];
+  const dv=Math.round(nb.dev);$('centsOut').textContent=(dv>0?'+':'')+dv;$('hzOut').textContent=f.toFixed(1);
+  $('needle').style.left=(50+Math.max(-50,Math.min(50,nb.dev)))+'%';
+  $('needle').style.background=Math.abs(nb.dev)<=10?'var(--good)':Math.abs(nb.dev)<=25?'var(--near)':'var(--off)';
+}
+
+/* ---------- exercise player ---------- */
+let cur={ex:null,groups:[],chips:[]};
+const P={playing:false,t0:0,ev:[],total:0,stats:[],idx:-1,nodes:[]};
+function timeline(groups,tempo,speed){
+  const beat=60/tempo/speed;let t=0;const ev=[];
+  groups.forEach(g=>{if(g==='br')return;g.forEach(n=>{ev.push({n,start:t,dur:n.b*beat});t+=n.b*beat;});});
+  return{ev,total:t};
+}
+function loadEx(id,keepTab){
+  const ex=EXMAP[id]||EXMAP.sa;S.exId=ex.id;save();stop();
+  cur.ex=ex;cur.groups=buildGroups(ex);
+  $('exCat').textContent=ex.cat;$('exName').textContent=ex.name;
+  $('thaatWrap').hidden=!ex.pat;
+  if(ex.tempo&&!keepTab){S.tempo=ex.tempo;syncTempo();}
+  const box=$('notation');box.innerHTML='';cur.chips=[];
+  cur.groups.forEach(g=>{
+    if(g==='br'){const b=document.createElement('div');b.className='brk';box.appendChild(b);return;}
+    const gd=document.createElement('div');gd.className='grp';
+    g.forEach(n=>{const c=document.createElement('span');c.className='nt'+(n.rest?' rest':'');c.innerHTML=noteHTML(n);
+      c.title=n.rest?'rest':SW[n.s].n+(n.to?' gliding to '+SW[n.to.s].n:'');gd.appendChild(c);cur.chips.push(c);});
+    box.appendChild(gd);
+  });
+  const t=ex.teach,dl=$('teach');dl.innerHTML='';
+  [['Aim',t.aim],['How',t.how],['Watch for',t.watch],['Then',t.then]].forEach(([k,v])=>{if(!v)return;
+    const dt=document.createElement('dt');dt.textContent=k;const dd=document.createElement('dd');dd.textContent=v;dl.append(dt,dd);});
+  $('scoreOut').innerHTML='Press Play. The highlighted swar is the one to sing.';
+  computeRange();
+}
+function guideTone(e,t0){
+  const st=t0+e.start,du=e.dur,f1=noteFreq(e.n),a=Math.min(0.04,du*0.25),rl=Math.min(0.07,du*0.3);
+  const o=ctx.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(f1,st);
+  if(e.n.to){o.frequency.setValueAtTime(f1,st+du*0.2);o.frequency.exponentialRampToValueAtTime(noteFreq(e.n.to),st+du*0.8);}
+  const o2=ctx.createOscillator();o2.type='square';o2.frequency.value=f1/2;o2.detune.value=4;
+  if(e.n.to){o2.frequency.setValueAtTime(f1/2,st+du*0.2);o2.frequency.exponentialRampToValueAtTime(noteFreq(e.n.to)/2,st+du*0.8);}
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1700;lp.Q.value=0.6;
+  const g2=ctx.createGain();g2.gain.value=0.35;
+  const g=ctx.createGain();g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(0.085,st+a);
+  g.gain.setValueAtTime(0.085,Math.max(st+a,st+du-rl));g.gain.linearRampToValueAtTime(0,st+du-0.004);
+  if(e.n.osc){const l=ctx.createOscillator();l.frequency.value=0.8;const lg=ctx.createGain();lg.gain.value=-22;l.connect(lg);lg.connect(o.detune);lg.connect(o2.detune);l.start(st);l.stop(st+du+0.05);P.nodes.push(l);}
+  o.connect(lp);o2.connect(g2);g2.connect(lp);lp.connect(g);g.connect(guideBus);
+  o.start(st);o2.start(st);o.stop(st+du+0.02);o2.stop(st+du+0.02);P.nodes.push(o,o2);
+}
+function start(t0){
+  const tl=timeline(cur.groups,S.tempo,cur.ex.speed||1);P.ev=tl.ev;P.total=tl.total;P.t0=t0;P.idx=-1;
+  P.stats=P.ev.map(()=>({sum:0,n:0}));cur.chips.forEach(c=>c.classList.remove('on','good','near','off','miss'));
+  if(S.guide==='tone')P.ev.forEach(e=>{if(!e.n.rest)guideTone(e,t0);});
+}
+function play(){
+  getCtx();ctx.resume();tanSet(true);P.playing=true;start(ctx.currentTime+0.6);
+  $('playBtn').textContent='Stop';$('scoreOut').textContent=mic.on?'Scoring each swar…':'Singing along. Start the mic to have each swar scored.';
+}
+function stop(){
+  if(!P.playing)return;P.playing=false;P.nodes.forEach(n=>{try{n.stop()}catch(e){}});P.nodes=[];
+  cur.chips.forEach(c=>c.classList.remove('on'));$('playBtn').textContent='Play';
+}
+function targetAt(e,tt){
+  const base=centsOf(e.n);if(!e.n.to)return base;const to=centsOf(e.n.to);
+  const fr=Math.min(1,Math.max(0,((tt-e.start)/e.dur-0.2)/0.6));return base+(to-base)*fr;
+}
+function scoreFrame(now,c){
+  if(!P.playing)return;const tt=now-P.t0,i=P.idx;if(i<0||i>=P.ev.length)return;const e=P.ev[i];
+  if(e.n.rest||tt<e.start+Math.min(0.15,e.dur*0.3))return;
+  let dv=c-targetAt(e,tt);dv=((dv%1200)+1800)%1200-600;
+  P.stats[i].sum+=Math.abs(dv);P.stats[i].n++;
+}
+function gradeChip(i){
+  const e=P.ev[i],c=cur.chips[i];if(!c)return;c.classList.remove('on');if(e.n.rest||!mic.on)return;
+  const st=P.stats[i];if(st.n<3){c.classList.add('miss');return;}
+  const avg=st.sum/st.n;c.classList.add(avg<=15?'good':avg<=35?'near':'off');
+}
+function summary(){
+  if(!mic.on){$('scoreOut').textContent='Done. Start the mic next time to have each swar scored.';return;}
+  let n=0,good=0,sum=0,cnt=0;P.ev.forEach((e,i)=>{if(e.n.rest)return;n++;const s=P.stats[i];if(s.n>=3){const a=s.sum/s.n;sum+=a;cnt++;if(a<=15)good++;}});
+  $('scoreOut').innerHTML=cnt?`<b>${good} of ${n}</b> swars within 15 cents · average distance <b>${Math.round(sum/cnt)} cents</b>`:'No voice was heard. Check the mic and sing a little louder.';
+}
+function playerFrame(){
+  if(!P.playing)return;const tt=ctx.currentTime-P.t0;
+  let i=P.idx;while(i+1<P.ev.length&&tt>=P.ev[i+1].start)i++;
+  if(i!==P.idx){if(P.idx>=0)gradeChip(P.idx);P.idx=i;if(i>=0&&cur.chips[i]){cur.chips[i].classList.add('on');
+    const box=$('notation'),ch=cur.chips[i];const top=ch.offsetTop-box.offsetTop;if(top<box.scrollTop||top>box.scrollTop+box.clientHeight-40)box.scrollTop=top-40;}}
+  if(tt>=P.total){if(P.idx>=0)gradeChip(P.idx);summary();
+    if(S.loop){const t0=P.t0+P.total+60/S.tempo;start(t0);}else stop();}
+}
+
+/* ---------- scope drawing ---------- */
+let colors={},colorAge=99,range={lo:-250,hi:450},lanes=[0];
+function readColors(){const cs=getComputedStyle(document.documentElement);['bg','fg','muted','line','brass','trace','surface-2'].forEach(k=>colors[k]=cs.getPropertyValue('--'+k).trim());}
+function computeRange(){
+  const cs=[],set=new Set([0]);cur.groups.forEach(g=>{if(g==='br')return;g.forEach(n=>{if(n.rest)return;cs.push(centsOf(n));set.add(n.s);if(n.to){cs.push(centsOf(n.to));set.add(n.to.s);}});});
+  let lo=Math.min(0,...cs)-180,hi=Math.max(0,...cs)+180;if(hi-lo<700){const m=(hi+lo)/2;lo=m-350;hi=m+350;}
+  range={lo,hi};lanes=[...set];
+}
+function fitCanvas(cv){const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}return{dpr,w,h};}
+function drawLanes(g,w,h,lo,hi,laneSet,left){
+  const y=c=>h-14-(c-lo)/(hi-lo)*(h-28);
+  for(let k=-2;k<=2;k++)for(const s of laneSet){const c=JI[s]+1200*k;if(c<lo||c>hi)continue;const yy=y(c),isSa=s===0;
+    g.strokeStyle=isSa?colors.brass:colors.line;g.globalAlpha=isSa?0.85:1;g.lineWidth=isSa?1.5:1;
+    g.beginPath();g.moveTo(left,yy);g.lineTo(w,yy);g.stroke();g.globalAlpha=1;
+    const sw=SW[s];g.fillStyle=isSa?colors.brass:colors.muted;g.font='600 12px "Hanken Grotesk",system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText(sw.l,14,yy);if(sw.k){g.fillRect(9,yy+7,10,1.5);}if(sw.t){g.fillRect(13.5,yy-12,1.5,4);}
+    if(k!==0){for(let q=0;q<Math.abs(k);q++){g.beginPath();g.arc(14+(q-(Math.abs(k)-1)/2)*5,k>0?yy-10:yy+11,1.6,0,7);g.fill();}}
+  }
+  return y;
+}
+function drawScope(){
+  const cv=$('trace');if(cv.offsetParent===null)return;const{dpr,w,h}=fitCanvas(cv);const g=cv.getContext('2d');
+  g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);const{lo,hi}=range;
+  const y=drawLanes(g,w,h,lo,hi,lanes,28);
+  const live=ctx&&(mic.on||P.playing);const now=ctx?ctx.currentTime:0,xNow=28+(w-28)*0.7,pps=(xNow-28)/7;
+  if(live){
+    g.strokeStyle=colors.muted;g.globalAlpha=0.4;g.beginPath();g.moveTo(xNow,6);g.lineTo(xNow,h-6);g.stroke();g.globalAlpha=1;
+    if(P.playing){P.ev.forEach((e,i)=>{if(e.n.rest)return;const x1=xNow+(P.t0+e.start-now)*pps,x2=xNow+(P.t0+e.start+e.dur-now)*pps;if(x2<28||x1>w)return;
+      g.strokeStyle=colors.brass;g.globalAlpha=i===P.idx?0.9:0.38;g.lineWidth=7;g.lineCap='round';g.beginPath();
+      const a=centsOf(e.n);if(e.n.to){const b=centsOf(e.n.to);g.moveTo(x1+3,y(a));g.lineTo(x1+(x2-x1)*0.2,y(a));g.lineTo(x1+(x2-x1)*0.8,y(b));g.lineTo(x2-3,y(b));}
+      else{g.moveTo(x1+3,y(a));g.lineTo(Math.max(x1+4,x2-3),y(a));}g.stroke();g.globalAlpha=1;});}
+    g.strokeStyle=colors.trace;g.lineWidth=2.5;g.lineCap='round';g.lineJoin='round';g.beginPath();let pen=false,lt=0;
+    for(const p of mic.hist){const x=xNow+(p.t-now)*pps;if(p.c===null||x<28||(pen&&p.t-lt>0.12)){if(p.c===null){pen=false;continue;}pen=false;}
+      const yy=y(Math.max(lo,Math.min(hi,p.c)));if(!pen){g.moveTo(x,yy);pen=true;}else g.lineTo(x,yy);lt=p.t;}
+    g.stroke();
+  }else{
+    // sample trace: steady Sa, then a meend to Re
+    g.strokeStyle=colors.trace;g.globalAlpha=0.55;g.lineWidth=2.5;g.lineCap='round';g.beginPath();
+    const span=w-40;for(let i=0;i<=200;i++){const fr=i/200,x=36+fr*span;let c;
+      if(fr<0.45)c=Math.sin(fr*40)*4+(fr<0.05?-25*(1-fr/0.05):0);else if(fr<0.6)c=204*((fr-0.45)/0.15)**1.2;else c=204+Math.sin(fr*50)*5;
+      if(c>hi||c<lo)continue;const yy=y(c);i?g.lineTo(x,yy):g.moveTo(x,yy);}
+    g.stroke();g.globalAlpha=1;
+  }
+}
+
+/* ---------- loop ---------- */
+function frame(){
+  if(++colorAge>60){readColors();colorAge=0;}
+  if(ctx){micFrame();playerFrame();}
+  if(!$('practice').hidden)drawScope();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- library ---------- */
+function renderLibrary(){
+  const body=$('libBody');body.innerHTML='';
+  [...new Set(EX.map(e=>e.cat))].forEach(cat=>{
+    const sec=document.createElement('div');sec.className='lib-sec';
+    sec.innerHTML=`<h3>${cat}</h3><p class="sec-note">${CAT_NOTES[cat]||''}</p>`;
+    const cards=document.createElement('div');cards.className='cards';
+    EX.filter(e=>e.cat===cat).forEach(ex=>{
+      const groups=buildGroups(ex).filter(g=>g!=='br').slice(0,ex.raag?8:5);
+      const pv=groups.map(g=>g.map(plainNote).join('')).join(' ');
+      const c=document.createElement('div');c.className='card';
+      c.innerHTML=`<div class="nm"></div><div class="pv"></div><div class="ds"></div>`;
+      c.querySelector('.nm').textContent=ex.name;c.querySelector('.pv').textContent=pv+' …';
+      c.querySelector('.ds').textContent=ex.desc||ex.teach.aim;
+      const b=document.createElement('button');b.className='btn sm go';b.textContent='Practice this';
+      b.onclick=()=>{loadEx(ex.id);setTab('practice');};c.appendChild(b);cards.appendChild(c);
+    });
+    sec.appendChild(cards);body.appendChild(sec);
+  });
+}
+
+/* ---------- routine ---------- */
+const PLANS={
+ starter:[['Floor breath and hum','floor',5],['Sa sadhana','sa',10],['Alankars','pairs',12],['Meend','meend',6],['Raag scale','yaman',5],['Sing a song you love','',7,'Sing freely. Record it and listen back with the Recording check.']],
+ full:[['Floor breath and hum','floor',8],['Sa sadhana','sa',15],['Kharaj','kharaj',8],['Alankars','triplets',18],['Paltas','run5',12],['Meend and andolan','meend',9],['Raag scale','bhairavi',8],['Sing a song you love','',12,'Sing one of your favourite ghazals freely, recorded.']]};
+const sess={running:false,step:0,left:0,timer:null};
+function logGet(){return store.get('riyaz.log',{});}
+function dayKey(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function logAdd(sec){const l=logGet(),k=dayKey();l[k]=(l[k]||0)+sec;store.set('riyaz.log',l);}
+function renderSteps(){
+  const plan=PLANS[S.plan],ol=$('steps');ol.innerHTML='';
+  document.querySelectorAll('[data-plan]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.plan===S.plan));
+  plan.forEach((st,i)=>{const li=document.createElement('li');li.className='step'+(sess.running&&i===sess.step?' cur':'')+(sess.running&&i<sess.step?' done':'');
+    li.innerHTML=`<span class="n">${String(i+1).padStart(2,'0')}</span><span class="t"><b></b><span></span></span><span class="m">${st[2]} min</span>`;
+    li.querySelector('b').textContent=st[0];li.querySelector('.t span').textContent=st[1]?EXMAP[st[1]].name+(EXMAP[st[1]].pat?' · '+S.thaat:''):st[3];
+    const cell=document.createElement('span');
+    if(st[1]){const b=document.createElement('button');b.className='btn sm';b.textContent='Open';b.onclick=()=>{loadEx(st[1]);setTab('practice');};cell.appendChild(b);}
+    li.appendChild(cell);ol.appendChild(li);});
+}
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+function sessTick(){
+  sess.left--;logAdd(1);
+  if(sess.left<=0){chime();sess.step++;if(sess.step>=PLANS[S.plan].length){sessEnd(true);return;}enterStep();}
+  updClock();if(sess.left%30===0)renderStats();
+}
+function enterStep(){const st=PLANS[S.plan][sess.step];sess.left=st[2]*60;if(st[1])loadEx(st[1]);renderSteps();}
+function updClock(){
+  const pill=$('sessPill');
+  if(!sess.running){$('clock').textContent='00:00';$('clockStep').textContent='Not running';pill.hidden=true;return;}
+  const st=PLANS[S.plan][sess.step];$('clock').textContent=fmt(sess.left);$('clockStep').textContent=`Step ${sess.step+1} of ${PLANS[S.plan].length} · ${st[0]}`;
+  pill.hidden=false;pill.textContent=fmt(sess.left)+' · '+st[0];
+}
+function sessStart(){sess.running=true;sess.step=0;enterStep();sess.timer=setInterval(sessTick,1000);$('sessBtn').textContent='End session';$('sessBtn').classList.remove('primary');updClock();setTab('practice');}
+function sessEnd(done){clearInterval(sess.timer);sess.running=false;$('sessBtn').textContent='Start session';$('sessBtn').classList.add('primary');renderSteps();updClock();renderStats();
+  if(done)$('clockStep').textContent='Session complete. Well done.';}
+function chime(){if(!ctx)return;const t=ctx.currentTime;[1,1.5].forEach((m,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=saHz()*4*m;g.gain.setValueAtTime(0.0001,t+i*0.18);g.gain.exponentialRampToValueAtTime(0.12,t+i*0.18+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+i*0.18+1.2);o.connect(g);g.connect(master);o.start(t+i*0.18);o.stop(t+i*0.18+1.3);});}
+function renderStats(){
+  const l=logGet(),today=dayKey();const tot=Object.values(l).reduce((a,b)=>a+b,0);
+  $('stToday').textContent=Math.round((l[today]||0)/60);$('stTotal').textContent=(tot/3600).toFixed(1);
+  let streak=0;const d=new Date();if(!((l[dayKey(d)]||0)>=600))d.setDate(d.getDate()-1);
+  while((l[dayKey(d)]||0)>=600){streak++;d.setDate(d.getDate()-1);}$('stStreak').textContent=streak;
+  const pct=Math.min(100,tot/36000000*100);$('bar10k').style.width=Math.max(pct,tot>0?0.5:0)+'%';
+  let s30=0;const d2=new Date();for(let i=0;i<30;i++){s30+=l[dayKey(d2)]||0;d2.setDate(d2.getDate()-1);}
+  const perDay=s30/30/3600;
+  $('pace').textContent=tot<60?'Your first session starts the count. Sessions of 10+ minutes build your streak.':
+    `${pct.toFixed(2)}% of 10,000 hours · last 30 days: ${(perDay*60).toFixed(0)} min/day`+(perDay>0.01?` · at this pace, about ${((36000000-tot)/3600/perDay/365).toFixed(1)} more years`:'');
+  const box=$('days');box.innerHTML='';const vals=[];const d3=new Date();d3.setDate(d3.getDate()-13);
+  for(let i=0;i<14;i++){vals.push([new Date(d3),(l[dayKey(d3)]||0)/60]);d3.setDate(d3.getDate()+1);}
+  const mx=Math.max(60,...vals.map(v=>v[1]));
+  vals.forEach(([dt,m])=>{const el=document.createElement('div');el.className='d';el.title=`${dt.toDateString()}: ${Math.round(m)} min`;
+    el.innerHTML=`<i class="${m<1?'zero':''}" style="height:${Math.max(2,m/mx*70)}px"></i><span>${'SMTWTFS'[dt.getDay()]}</span>`;box.appendChild(el);});
+}
+
+/* ---------- recording check ---------- */
+async function analyzeFile(file){
+  const status=$('checkStatus');status.textContent='Reading the recording…';$('checkOut').hidden=true;
+  try{
+    const ab=await file.arrayBuffer();const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    const dec=await new OAC(1,2,44100).decodeAudioData(ab);
+    const dur=Math.min(dec.duration,480),SR=16000;
+    const off=new OAC(1,Math.ceil(dur*SR),SR);const src=off.createBufferSource();src.buffer=dec;src.connect(off.destination);src.start(0);
+    const rend=await off.startRendering();const x=rend.getChannelData(0);
+    const WIN=1024,HOP=320,frames=[];const buf=new Float32Array(WIN),sa=saHz();let pos=0;
+    await new Promise(res=>{function chunk(){const end=Math.min(x.length-WIN,pos+HOP*300);
+      for(;pos<end;pos+=HOP){buf.set(x.subarray(pos,pos+WIN));const r=yin(buf,SR,60,1100);frames.push(r&&r.clar>0.8?1200*Math.log2(r.f/sa):null);}
+      status.textContent=`Analyzing… ${Math.round(pos/x.length*100)}%`;if(pos<x.length-WIN)setTimeout(chunk,0);else res();}chunk();});
+    // median smoothing
+    const sm=frames.map((c,i)=>{if(c===null)return null;const w=[];for(let j=i-2;j<=i+2;j++)if(frames[j]!=null)w.push(frames[j]);w.sort((a,b)=>a-b);return w[w.length>>1];});
+    showResults(sm,HOP/SR,dur,file.name);status.textContent='';
+  }catch(e){status.textContent="That file couldn't be read. Try an m4a, mp3 or wav recording.";}
+}
+let lastRes=null;
+function showResults(fr,dt,dur,name){
+  const voiced=fr.filter(c=>c!==null);
+  if(voiced.length<20){$('checkStatus').textContent='Almost no singing was detected. Check that the recording has your voice clearly.';return;}
+  const per=Array.from({length:12},()=>({n:0,sum:0,bias:0}));let inTune=0;
+  voiced.forEach(c=>{const nb=nearest(c);const p=per[nb.s];p.n++;p.sum+=Math.abs(nb.dev);p.bias+=nb.dev;if(Math.abs(nb.dev)<=15)inTune++;});
+  const sorted=voiced.slice().sort((a,b)=>a-b);let lo=sorted[Math.floor(sorted.length*0.02)]-150,hi=sorted[Math.floor(sorted.length*0.98)]+150;
+  if(hi-lo<700){const m=(hi+lo)/2;lo=m-350;hi=m+350;}
+  const laneSet=per.map((p,s)=>p.n/voiced.length>0.02||s===0?s:-1).filter(s=>s>=0);
+  lastRes={fr,dt,lo,hi,laneSet};$('checkOut').hidden=false;$('resTag').textContent=name.length>40?name.slice(0,37)+'…':name;
+  drawRes();
+  const avgDev=per.reduce((a,p)=>a+p.sum,0)/voiced.length;
+  $('resStats').innerHTML=`<div class="stat"><div class="v">${Math.round(voiced.length*dt/60*10)/10}</div><div class="k">min of singing</div></div>
+   <div class="stat"><div class="v">${Math.round(inTune/voiced.length*100)}%</div><div class="k">within 15 cents</div></div>
+   <div class="stat"><div class="v">${Math.round(avgDev)}</div><div class="k">avg. cents off</div></div>`;
+  const rows=$('resRows');rows.innerHTML='';
+  per.map((p,s)=>({...p,s})).filter(p=>p.n/voiced.length>=0.02).sort((a,b)=>b.n-a.n).forEach(p=>{
+    const avg=p.sum/p.n,b=p.bias/p.n,tr=document.createElement('tr');
+    tr.innerHTML=`<td><b></b> <span style="color:var(--muted)"></span></td><td class="num">${Math.round(p.n/voiced.length*100)}%</td><td class="num" style="color:${avg<=15?'var(--good)':avg<=30?'var(--near)':'var(--off)'}">${avg.toFixed(0)} cents</td><td>${Math.abs(b)<5?'centred':b>0?'sharp by '+b.toFixed(0):'flat by '+(-b).toFixed(0)}</td>`;
+    tr.querySelector('b').textContent=SW[p.s].n;tr.querySelector('span').textContent=SW[p.s].d;rows.appendChild(tr);});
+}
+function drawRes(){
+  if(!lastRes)return;const cv=$('resCanvas');if(cv.offsetParent===null)return;const{dpr,w,h}=fitCanvas(cv);const g=cv.getContext('2d');
+  g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);readColors();const{fr,lo,hi,laneSet}=lastRes;
+  const y=drawLanes(g,w,h,lo,hi,laneSet,28);const xs=(w-36)/fr.length;
+  g.strokeStyle=colors.trace;g.lineWidth=1.6;g.beginPath();let pen=false;
+  fr.forEach((c,i)=>{if(c===null||c<lo||c>hi){pen=false;return;}const x=32+i*xs,yy=y(c);if(!pen){g.moveTo(x,yy);pen=true;}else g.lineTo(x,yy);});g.stroke();
+}
+
+/* ---------- tabs + wiring ---------- */
+function setTab(t){
+  if(!['practice','library','routine','check'].includes(t))t='practice';
+  document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!==t);
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='routine'){renderSteps();renderStats();}if(t==='check')requestAnimationFrame(drawRes);
+}
+function syncTempo(){$('tempo').value=S.tempo;$('tempoOut').textContent=S.tempo+' bpm';}
+function init(){
+  const sel=$('saSel');for(let m=43;m<=60;m++){const o=document.createElement('option');o.value=m;
+    const f=440*Math.pow(2,(m-69)/12);o.textContent=`${NAMES[m%12]}${Math.floor(m/12)-1} · ${HARM[m%12]} · ${f.toFixed(0)} Hz`;sel.appendChild(o);}
+  sel.value=S.saMidi;$('fine').value=S.fine;$('first').value=S.first;$('tanVol').value=S.tanVol;$('guideVol').value=S.guideVol;$('loopChk').checked=S.loop;
+  const upSa=()=>{$('saHz').textContent=saHz().toFixed(1);if(rec.el)rec.el.playbackRate=recRate();};upSa();
+  const rk=$('recKey');NAMES.forEach((n,i)=>{const o=document.createElement('option');o.value=i;o.textContent='Recording in '+n;rk.appendChild(o);});
+  rk.value=S.recKey;rk.onchange=()=>{S.recKey=+rk.value;save();if(rec.el)rec.el.playbackRate=recRate();};
+  $('tanSrc').value=S.tanSrc;$('tanSrc').onchange=()=>{S.tanSrc=$('tanSrc').value;save();recUI();tanRestart();};
+  $('tanFile').onchange=async()=>{const f=$('tanFile').files[0];if(!f)return;setRecFile(f,f.name);S.tanSrc='rec';$('tanSrc').value='rec';save();recUI();tanRestart();
+    try{await idb.put('tanpura',{blob:f,name:f.name});}catch(e){}};
+  recUI();(async()=>{try{const v=await idb.get('tanpura');if(v&&v.blob){setRecFile(v.blob,v.name);}}catch(e){}})();
+  sel.onchange=()=>{S.saMidi=+sel.value;save();upSa();};
+  $('fine').onchange=()=>{S.fine=Math.max(-50,Math.min(50,+$('fine').value||0));$('fine').value=S.fine;save();upSa();};
+  $('first').onchange=()=>{S.first=$('first').value;save();};
+  $('fine').addEventListener('change',()=>{if(rec.el)rec.el.playbackRate=recRate();});
+  $('tanVol').oninput=()=>{S.tanVol=+$('tanVol').value;if(tanBus)tanBus.gain.value=S.tanVol;save();};
+  $('guideVol').oninput=()=>{S.guideVol=+$('guideVol').value;if(guideBus)guideBus.gain.value=S.guideVol;save();};
+  $('tanBtn').onclick=()=>tanSet(!tan.on);
+  $('micBtn').onclick=()=>mic.on?micStop():micStart();
+  $('playBtn').onclick=()=>P.playing?stop():play();
+  syncTempo();$('tempo').oninput=()=>{S.tempo=+$('tempo').value;syncTempo();save();};
+  const setGuide=gm=>{S.guide=gm;save();document.querySelectorAll('[data-guide]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.guide===gm));};
+  document.querySelectorAll('[data-guide]').forEach(b=>b.onclick=()=>setGuide(b.dataset.guide));setGuide(S.guide);
+  $('loopChk').onchange=()=>{S.loop=$('loopChk').checked;save();};
+  [$('thaatSel'),$('thaatSel2')].forEach(s=>{Object.keys(THAATS).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;s.appendChild(o);});s.value=S.thaat;
+    s.onchange=()=>{S.thaat=s.value;save();$('thaatSel').value=$('thaatSel2').value=S.thaat;renderLibrary();if(cur.ex&&cur.ex.pat)loadEx(cur.ex.id,true);};});
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+  document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{if(sess.running)return;S.plan=b.dataset.plan;save();renderSteps();});
+  $('sessBtn').onclick=()=>{if(sess.running)sessEnd(false);else{getCtx();ctx.resume();sessStart();}};
+  $('skipBtn').onclick=()=>{if(!sess.running)return;sess.step++;if(sess.step>=PLANS[S.plan].length)sessEnd(true);else{enterStep();updClock();}};
+  $('addBtn').onclick=()=>{const m=+$('addMin').value;if(m>0&&m<=600){logAdd(Math.round(m*60));$('addMin').value='';renderStats();}};
+  const drop=$('drop'),fi=$('fileIn');fi.onchange=()=>{if(fi.files[0])analyzeFile(fi.files[0]);};
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hover');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hover');}));
+  drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)analyzeFile(f);});
+  window.addEventListener('hashchange',()=>setTab(location.hash.slice(1)));
+  window.addEventListener('resize',()=>drawRes());
+  renderLibrary();loadEx(S.exId,true);readColors();setTab(location.hash.slice(1)||'practice');
+  requestAnimationFrame(frame);
+}
+init();
+})();
+</script>
+</body></html>
